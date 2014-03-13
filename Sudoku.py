@@ -1,7 +1,7 @@
 ####
 #
-#   ALO_ALL(int)
-#   AMO_ALL(int)
+#   ALO(int)
+#   AMO(int)
 #   CON_COLUMN(int)
 #   CON_ROW(int)
 #   CON_SUBGRIDS(int)
@@ -18,26 +18,38 @@ import outputCNF
 from math import *
 
 cnfFlieName = "sudoku.cnf"
-num = 9
+n = 4
 
 
-def ALO_ALL(n):
+# Number of clauses
+ALO_num = n ** 2
+AMO_num = n ** 2
+CON_num = n ** 3 * (n - 1) + (n * (n - 1) / 2 - n * (int(sqrt(n)) - 1)) * n ** 2
+SUP_num = n ** 3 + (n ** 3 * (n - 1 )) / 2
+MAX_num = n ** 3
+
+
+# All kinds of encoding clauses
+def ALO(n):
+    # To ensure each square has at least one value.
+
     X = range(1, n + 1, 1)
     Y = X
     I = X
-    outputCNF.write_header(999, 11745, cnfFlieName)
     f = open(cnfFlieName, "a")
 
     for x in X:
         for y in Y:
             for i in I:
-                # print >> f, "%d%d%d" % (x, y, i),
+                # print >> f, "(%d,%d)%d" % (x, y, i),
                 print >> f, "%d" % (n * n * (x - 1) + n * (y - 1) + i),
             print >> f, 0
     return
 
 
-def AMO_ALL(n):
+def AMO(n):
+    # No AMO because each domain only has one value.
+
     X = range(1, n + 1, 1)
     Y = range(1, n + 1, 1)
     I = range(1, n, 1)
@@ -54,24 +66,6 @@ def AMO_ALL(n):
     return
 
 
-def AMO_2(n):
-    X = range(1, n, 1)
-    Y = range(1, n, 1)
-    I = range(1, n + 1, 1)
-
-    f = open(cnfFlieName, "a")
-
-    for x in X:
-        for y in Y:
-            for x1 in range(x + 1, n + 1, 1):
-                for y1 in range(y + 1, n + 1, 1):
-                    for i in I:
-                        # print >> f, "-%d%d%d -%d%d%d 0" % (x, y, i, x, y, j)
-                        print >> f, "-%d -%d 0" % (n * n * (x - 1) + n * (y - 1) + i, n * n * (x1) + n * (y1) + i)
-
-    return
-
-
 def CON_COLUMN(n):
     X = range(1, n, 1)
     Y = range(1, n + 1, 1)
@@ -82,7 +76,7 @@ def CON_COLUMN(n):
         for i in I:
             for x in X:
                 for m in range(x + 1, n + 1, 1):
-                    # print >> f, "-%d%d%d -%d%d%d 0" % (x, y, i, m, y, i)
+                    # print >> f, "-(%d,%d)%d -(%d,%d)%d 0" % (x, y, i, m, y, i)
                     print >> f, "-%d -%d 0" % (n * n * (x - 1) + n * (y - 1) + i, n * n * (m - 1) + n * (y - 1) + i)
 
     return
@@ -99,7 +93,7 @@ def CON_ROW(n):
         for i in I:
             for y in Y:
                 for n in range(y + 1, n + 1, 1):
-                    # print >> f, "-%d%d%d -%d%d%d 0" % (x, y, i, x, n, i)
+                    # print >> f, "-(%d,%d)%d -(%d,%d)%d 0" % (x, y, i, x, n, i)
                     print >> f, "-%d -%d 0" % (n * n * (x - 1) + n * (y - 1) + i, n * n * (x - 1) + n * (n - 1) + i)
 
     return
@@ -114,29 +108,33 @@ def CON_SUBGRIDS(n):
     L = range(1, int(sqrt(n)) + 1, 1)
 
     f = open(cnfFlieName, "a")
+    k = 0
 
     for i in I:
         for z in Z:
             for j in J:
                 for x in X:
                     for y in Y:
-                        for k in range(y + 1, int(sqrt(n)) + 1, 1):
-                            # print >> f, "(%d,%d)-%d (%d,%d)-%d 0" % (
-                            #     int(sqrt(n)) * z + x, int(sqrt(n)) * j + y, i, int(sqrt(n)) * z + x,
-                            #     int(sqrt(n)) * j + k,
-                            #     i)
-                            print >> f, "-%d -%d 0" % (
-                                n * n * ((int(sqrt(n)) * z + x) - 1) + n * ((int(sqrt(n)) * j + y) - 1) + i,
-                                n * n * ((int(sqrt(n)) * z + x) - 1) + n * ((int(sqrt(n)) * j + k) - 1) + i)
+                        # for k in range(y + 1, int(sqrt(n)) + 1, 1):
+                        # print >> f, "(%d,%d)-%d (%d,%d)-%d 0" % (
+                        #     int(sqrt(n)) * z + x, int(sqrt(n)) * j + y, i, int(sqrt(n)) * z + x,
+                        #     int(sqrt(n)) * j + k,
+                        #     i)
+                        # print >> f, "-%d -%d 0" % (
+                        #     n * n * ((int(sqrt(n)) * z + x) - 1) + n * ((int(sqrt(n)) * j + y) - 1) + i,
+                        #     n * n * ((int(sqrt(n)) * z + x) - 1) + n * ((int(sqrt(n)) * j + k) - 1) + i)
 
                         for m in range(x + 1, int(sqrt(n)) + 1, 1):
                             for l in L:
-                                # print >> f, "(%d,%d)-%d (%d,%d)-%d 0" % (
-                                #     int(sqrt(n)) * z + x, int(sqrt(n)) * j + y, i, int(sqrt(n)) * z + k,
-                                #     int(sqrt(n)) * j + l, i)
-                                print >> f, "-%d -%d 0" % (
-                                    n * n * ((int(sqrt(n)) * z + x) - 1) + n * ((int(sqrt(n)) * j + y) - 1) + i,
-                                    n * n * ((int(sqrt(n)) * z + k) - 1) + n * ((int(sqrt(n)) * j + l) - 1) + i)
+                                if ((int(sqrt(n)) * j + y) != (int(sqrt(n)) * j + l)):
+                                    # print >> f, "-(%d,%d)%d -(%d,%d)%d 0" % (
+                                    #     int(sqrt(n)) * z + x, int(sqrt(n)) * j + y, i, int(sqrt(n)) * z + m,
+                                    #     int(sqrt(n)) * j + l, i)
+                                    print >> f, "-%d -%d 0" % (
+                                        n * n * ((int(sqrt(n)) * z + x) - 1) + n * ((int(sqrt(n)) * j + y) - 1) + i,
+                                        n * n * ((int(sqrt(n)) * z + m) - 1) + n * ((int(sqrt(n)) * j + l) - 1) + i)
+                                    # k = k + 1
+    # print(k)
 
     return
 
@@ -144,6 +142,7 @@ def CON_SUBGRIDS(n):
 def SUP_ROW(n):
     X = range(1, n, 1)
     I = range(1, n + 1, 1)
+    k = 0
 
     f = open(cnfFlieName, "a")
 
@@ -157,7 +156,9 @@ def SUP_ROW(n):
                             print >> f, "%d" % (n * n * (x - 1) + n * (y - 1) + j),
                     # print >> f, "(%d,%d)-%d 0" % (x, z, i)
                     print >> f, "-%d 0" % (n * n * (x - 1) + n * (z - 1) + i)
+                    # k = k + 1
 
+    # print k
     return
 
 
@@ -191,6 +192,8 @@ def SUP_SUBGRIDS(n):
 
     f = open(cnfFlieName, "a")
 
+    k = 0
+
     for x in X:
         for y in Y:
             for k in K:
@@ -205,6 +208,8 @@ def SUP_SUBGRIDS(n):
                                             print >> f, "%d" % (n * n * ((x + k1) - 1) + n * ((y + l1) - 1) + i1),
                         # print >> f, "(%d,%d)-%d 0" % (x + k, y + l, i)
                         print >> f, "-%d 0" % (n * n * ((x + k) - 1) + n * ((y + l) - 1) + i)
+                        # k = k + 1
+    # print k
     return
 
 
@@ -278,18 +283,42 @@ def MAX(n):
 
                 # To print out the end of each clause and the corresponding CSP variable
                 # print >> f, "(%d,%d)%d 0" % (x, y, i)
-                print >> f, "-%d 0" % (n * n * (x1 - 1) + n * (y1 - 1) + i)
+                print >> f, "%d 0" % (n * n * (x - 1) + n * (y - 1) + i)
 
     return
 
 
-ALO_ALL(num)
-# AMO_ALL(num)
-CON_COLUMN(num)
-CON_ROW(num)
-CON_SUBGRIDS(num)
-# SUP_ROW(num)
-# SUP_COLUMN(num)
-# SUP_SUBGRIDS(num)
-# SUP(num)
-MAX(num)
+def direct_encoding(n):
+    outputCNF.write_header(n ** 3, ALO_num + AMO_num + CON_num, cnfFlieName)
+
+    ALO(n)
+    AMO(n)
+    CON_COLUMN(n)
+    CON_ROW(n)
+    CON_SUBGRIDS(n)
+
+
+def support_encoding(n):
+    outputCNF.write_header(n ** 3, ALO_num + AMO_num + SUP_num, cnfFlieName)
+
+    ALO(n)
+    AMO(n)
+    SUP_ROW(n)
+    SUP_COLUMN(n)
+    SUP_SUBGRIDS(n)
+
+
+def maximal_encoding(n):
+    outputCNF.write_header(n ** 3, ALO_num + CON_num + MAX_num, cnfFlieName)
+
+    ALO(n)
+    CON_COLUMN(n)
+    CON_ROW(n)
+    CON_SUBGRIDS(n)
+    MAX(n)
+
+
+# direct_encoding(n)
+# support_encoding(n)
+maximal_encoding(n)
+

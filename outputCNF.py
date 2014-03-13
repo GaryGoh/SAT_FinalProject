@@ -7,8 +7,6 @@ def write_header(variables, clauses, fileName):
     header = "p cnf " + str(variables) + " " + str(clauses)
     cnfFile.write(header + "\n")
 
-
-
 ## To write the clauses to CNF file
 # def write_clauses(variables, clauses, fileName):
 #     cnfFile = open(str(fileName), "a")
